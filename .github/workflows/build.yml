@@ -1,4 +1,3 @@
-
 name: Build APK
 on: [push, workflow_dispatch]
 jobs:
@@ -12,8 +11,13 @@ jobs:
         with: { distribution: temurin, java-version: 17 }
       - run: npm install
       - run: npx cap add android
-      - run: |
-          sed -i 's#<application#<uses-permission android:name="android.permission.CAMERA" />\n<uses-permission android:name="android.permission.VIBRATE" />\n<application#' android/app/src/main/AndroidManifest.xml
+      - name: Make app icon
+        run: |
+          mkdir -p assets
+          convert www/img/app-icon.png -background '#0a0e1a' -alpha remove -alpha off -resize 1024x1024 -gravity center -extent 1024x1024 assets/icon-only.png
+          npx capacitor-assets generate --android --iconBackgroundColor '#0a0e1a'
+      - name: Add permissions
+        run: sed -i 's#<application#<uses-permission android:name="android.permission.CAMERA" />\n<uses-permission android:name="android.permission.VIBRATE" />\n<application#' android/app/src/main/AndroidManifest.xml
       - run: npx cap sync android
       - run: cd android && ./gradlew assembleDebug
       - uses: actions/upload-artifact@v4
